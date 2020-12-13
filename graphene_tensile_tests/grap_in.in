@@ -1,0 +1,72 @@
+#uniaxial tensile test of graphene
+
+##---------------INITIALIZATION-------------------------------
+
+units          metal
+dimension 	    3 
+boundary       p p f
+atom_style 	atomic
+newton 		on
+
+
+##---------------ATOM DEFINITION------------------------------
+
+read_data 	grap_data.data
+
+
+##---------------FORCE FIELDS---------------------------------
+
+pair_style 	airebo 3.0
+pair_coeff     * * CH.airebo C
+
+
+##---------------SETTINGS-------------------------------------
+
+timestep 	0.0005
+variable   ts equal 0.0005
+
+
+##---------------COMPUTES-------------------------------------
+
+compute 	1 all stress/atom NULL
+compute    2 all reduce sum c_1[1] c_1[2]
+
+
+variable   Lx equal lx
+variable   Ly equal ly
+variable   Lz equal lz
+variable   Vol equal vol
+variable   thickn equal 3.4
+fix		1 all npt temp 300 300 0.05 x 0 0 0.5 y 0 0 0.5
+thermo 	200
+##---------------RELAXATION--------------------------------------
+
+run            2000
+
+
+##---------------DEFORMATION--------------------------------------
+unfix              1
+reset_timestep     0
+fix		1 all npt temp 300 300 0.05 x 0 0 0.5
+fix        2 all ave/time 1 10 10 c_2[1] c_2[2]
+fix        3 all ave/time 1 10 10 v_Lx v_Ly v_Lz v_Vol
+variable   srate equal 1.0e11
+variable   srate1 equal "v_srate / 1.0e12"
+fix		4 all deform 1 y erate ${srate1} units box remap x
+run            10
+
+##---------------THERMO-OUTPUTS--------------------------------------
+variable   CorVol equal f_3[4]*v_thickn/(f_3[3])
+variable   ConvoFac equal 1/1.0e4
+variable   sigmaxx equal f_2[1]*v_ConvoFac/v_CorVol
+variable   sigmayy equal f_2[2]*v_ConvoFac/v_CorVol
+variable   StrainPerTs equal v_srate1*v_ts
+variable   strain equal v_StrainPerTs*step
+thermo 	100
+thermo_style custom step temp v_strain v_sigmaxx v_sigmayy pe ke lx ly vol 
+
+
+##---------------DEFORMATION--------------------------------------
+dump           1 all atom 50 tensile_test.lammpstrj
+fix            write all print 10 "${strain} ${sigmayy} ${sigmaxx}" file stress-strain.dump screen no
+run            6000
