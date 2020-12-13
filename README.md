@@ -1,2 +1,2 @@
-# LAMMPS_tutorials_for_short_courses
-Contains required files for the LAMMPS hands-on tutorials of the IIT-Indore  short courses.
+# LAMMPS tutorials for short courses
+More information on the graphene_tensile_tests tutorial [is available here](https://www.linkedin.com/pulse/how-perform-uniaxial-tensile-tests-graphene-sample-lammps-dewapriya/) and information on the polyurethane_aluminum_interface tutorial [is available here] (https://github.com/nuwan-d/polymer_metal_interface/blob/master/README.md).
