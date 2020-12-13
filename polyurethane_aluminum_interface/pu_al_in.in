@@ -1,0 +1,40 @@
+
+units              real
+atom_style         full
+boundary           p p p
+
+
+# -----------------Potential definition-----------------
+
+read_data          "pu_al_data.data"
+include            "pu_al_para.params"
+
+
+# -----------------Integration-----------------
+
+timestep        0.5
+variable        t_step equal 0.5
+kspace_style	pppm 1.0e-6
+
+
+# ----------------- Minimization-----------------
+
+min_style          cg
+min_modify         dmax 0.4
+minimize           1e-8 1e-10 200 500
+reset_timestep     0
+
+
+# -----------------Run-----------------
+
+fix		1 all nve
+fix		2 all langevin 300.0 300.0 $(100.0*v_t_step) 904297
+
+thermo          200
+dump          	1 all atom 200 al_pu_equilibration.lammpstrj
+
+variable E_t equal etotal
+variable time equal time*0.001
+fix           write all print 10 "${time} ${E_t}" file energy.dump screen no
+
+run 	      	5000
