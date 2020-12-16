@@ -1,0 +1,47 @@
+# Created by Nuwan Dewapriya on 2020-12-16
+
+units 		real
+boundary	p p p
+atom_style	full
+
+
+# -----------------Potential-----------------
+
+variable	cutoff		equal	10
+variable	charge_cutoff	equal	12
+
+pair_style	lj/class2/coul/long ${cutoff} ${charge_cutoff}  
+bond_style	class2
+angle_style	class2
+dihedral_style	class2
+improper_style	class2
+pair_modify	mix sixthpower tail yes
+special_bonds	lj/coul 0 0 1
+
+read_data 	"pu_data.data"
+include         "pu_para.params"
+kspace_style	 pppm 1e-06
+
+
+# ----------------- Minimization-----------------
+
+min_style          cg
+min_modify         dmax 0.4
+minimize           1e-8 1e-10 20000 50000
+reset_timestep     0
+
+variable tstp equal 1
+timestep 	${tstp}
+variable 	tdamp equal "v_tstp * 100"
+variable 	pdamp equal "v_tstp * 1000"
+variable 	E_t equal etotal
+variable 	time equal time*0.001
+
+fix            1 all nvt temp 1 1 ${tdamp} 
+
+thermo 1000
+
+dump          1 all atom 200 pu_eq.lammpstrj
+fix           write all print 100 "${time} ${E_t}" file energy.dump screen no
+
+run 	50000
